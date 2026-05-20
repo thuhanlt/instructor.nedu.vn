@@ -33,11 +33,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   async initialize() {
     set({ isLoading: true })
 
-    // Mock mode auto-login if there's no token: provide a synthetic token
+    // Mock mode: always bypass Google login, force-fetch the mock user.
     if (env.enableMocking) {
-      if (!tokenStorage.getAccess()) {
-        tokenStorage.set('mock-access-token', 'mock-refresh-token')
-      }
+      tokenStorage.set('mock-access-token', 'mock-refresh-token')
+      const user = await fetchMe()
+      set({ user, isLoading: false, initialized: true })
+      return
     }
 
     const access = tokenStorage.getAccess()
@@ -77,5 +78,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     analytics.track(ANALYTICS_EVENTS.LOGOUT)
     await authCentral.logout()
     set({ user: null })
+    // Mock mode: immediately re-login the mock user so the app never lands on /login.
+    if (env.enableMocking) {
+      tokenStorage.set('mock-access-token', 'mock-refresh-token')
+      const user = await fetchMe()
+      set({ user })
+    }
   },
 }))

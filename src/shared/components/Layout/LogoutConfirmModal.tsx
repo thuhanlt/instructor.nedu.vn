@@ -5,6 +5,7 @@ import { Icon } from '../Icon'
 import { useT } from '@shared/i18n'
 import { useAuthStore } from '@modules/auth/stores/useAuthStore'
 import { notify } from '@shared/utils/notify'
+import { env } from '@shared/config/env'
 
 interface Props {
   open: boolean
@@ -20,7 +21,10 @@ export function LogoutConfirmModal({ open, onClose }: Props) {
     await logout()
     onClose()
     notify(t('logout.done'), 'success')
-    navigate('/login', { replace: true })
+    // In mock mode the store auto-re-logs in the mock user, so stay on the current page.
+    if (!env.enableMocking) {
+      navigate('/login', { replace: true })
+    }
   }
 
   return (

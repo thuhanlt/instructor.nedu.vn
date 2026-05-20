@@ -1,10 +1,30 @@
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/useAuthStore'
 import { useT } from '@shared/i18n'
 import { Icon } from '@shared/components/Icon'
+import { env } from '@shared/config/env'
 
 export function LoginPage() {
   const t = useT()
+  const navigate = useNavigate()
+  const user = useAuthStore((s) => s.user)
+  const initialized = useAuthStore((s) => s.initialized)
   const loginWithGoogle = useAuthStore((s) => s.loginWithGoogle)
+
+  // If already logged in (mock mode auto-login or persistent token), skip the login screen.
+  useEffect(() => {
+    if (initialized && user) {
+      navigate('/', { replace: true })
+    }
+  }, [initialized, user, navigate])
+
+  // Mock mode: never show the Google login UI — jump straight in.
+  useEffect(() => {
+    if (env.enableMocking && initialized && !user) {
+      navigate('/', { replace: true })
+    }
+  }, [initialized, user, navigate])
 
   return (
     <div className="login-shell">
