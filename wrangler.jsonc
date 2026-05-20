@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "nedu-instructor",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "single-page-application"
+  },
+  "env": {
+    "dev": {
+      "name": "nedu-instructor-dev"
+    },
+    "production": {
+      "name": "nedu-instructor-prod"
+    }
+  }
+}
