@@ -9,7 +9,7 @@ interface Props {
 export function CourseHeader({ detail }: Props) {
   const { program, klass, stats } = detail
   const firstType = klass.sessions[0]?.type ?? 'online'
-  const endDate = parseDateStr(klass.endDate)
+  const endDate = klass.endDate ? parseDateStr(klass.endDate) : null
 
   return (
     <>
@@ -40,8 +40,7 @@ export function CourseHeader({ detail }: Props) {
             {firstType === 'online' ? 'Online' : 'Offline'} · {stats.studentCount} học viên
             {' · Buổi '}
             {stats.sessionsDone} / {stats.sessionsTotal}
-            {' · Kết thúc '}
-            {endDate.toLocaleDateString('vi')}
+            {endDate ? ` · Kết thúc ${endDate.toLocaleDateString('vi')}` : ''}
           </div>
         </div>
       </div>

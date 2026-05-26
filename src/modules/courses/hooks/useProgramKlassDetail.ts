@@ -41,6 +41,7 @@ interface KlassDetailDto {
   klass: {
     id: string
     label: string
+    end_date: string | null
     student_count: number
     sessions: CourseSessionDetailDto[]
   }
@@ -77,6 +78,9 @@ function toDetail(d: KlassDetailDto): ProgramKlassDetail {
       id: programId,
       name: d.program.name,
       color: d.program.color,
+      // Chỉ dùng cho tab chuyển khoá (CoursesPage) — consumer chỉ đọc id + label.
+      // studentCount/endDate/sessions là placeholder, KHÔNG render (BE detail
+      // chỉ trả id+label cho danh sách khoá của program).
       klasses: d.program.klasses.map((k) => ({
         id: k.id,
         programId,
@@ -91,7 +95,7 @@ function toDetail(d: KlassDetailDto): ProgramKlassDetail {
       programId,
       label: d.klass.label,
       studentCount: d.klass.student_count,
-      endDate: '',
+      endDate: d.klass.end_date ?? '',
       sessions: d.klass.sessions.map((s) => toSession(programId, klassId, s)),
     },
     stats: {

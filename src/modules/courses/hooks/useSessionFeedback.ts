@@ -15,19 +15,23 @@ interface FeedbackDto {
   comment: string | null
   is_anonymous: boolean
   student_user_id: string | null
+  student_name: string | null
   created_at: string
 }
 
 function toItem(sessionId: string, d: FeedbackDto): FeedbackItem {
   return {
     id: d.feedback_id,
+    // Feedback theo session đã ở trong ngữ cảnh program/klass (URL) — tab này
+    // KHÔNG điều hướng bằng 2 id này nên để ''. ⚠️ FeedbackPage (Nhóm 4) nếu cần
+    // điều hướng phải populate programId/klassId (BE chưa trả ở /feedback).
     programId: '',
     klassId: '',
     sessionId,
     stars: ((d.rating ?? 0) as FeedbackItem['stars']),
     text: d.comment ?? '',
-    // BE không trả tên học viên; ẩn danh → "Ẩn danh", còn lại "Học viên".
-    studentName: d.is_anonymous ? 'Ẩn danh' : 'Học viên',
+    // Ẩn danh → "Ẩn danh"; còn lại hiện tên thật từ BE (fallback "Học viên").
+    studentName: d.is_anonymous ? 'Ẩn danh' : (d.student_name ?? 'Học viên'),
     createdAt: d.created_at,
   }
 }
