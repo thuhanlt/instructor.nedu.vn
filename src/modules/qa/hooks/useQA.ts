@@ -20,11 +20,11 @@ export interface QAFilter {
 interface QaQuestionDto {
   question_id: string
   session_id: string
-  session_title: string
+  session_title: string | null
   course_id: string | null
-  course_name: string
+  course_name: string | null
   course_run_id: string | null
-  course_run_label: string
+  course_run_label: string | null
   question_text: string
   status: string
   pinned_at: string | null
@@ -56,9 +56,10 @@ function toEnrichedQuestion(d: QaQuestionDto): EnrichedQuestion | null {
     createdAt: d.created_at,
     state,
     reply: d.answer?.answer_text,
-    programName: d.course_name,
-    klassLabel: d.course_run_label,
-    sessionTitle: d.session_title,
+    // Mọi field enrich từ BE đều nullable → coalesce '' đồng bộ, FE render luôn nhận string.
+    programName: d.course_name ?? '',
+    klassLabel: d.course_run_label ?? '',
+    sessionTitle: d.session_title ?? '',
     nextSessionTitle: null,
     daysToNextSession: 0,
   }
