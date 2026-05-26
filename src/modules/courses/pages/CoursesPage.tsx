@@ -9,9 +9,37 @@ import { Icon } from '@shared/components/Icon'
 import { CourseHeader } from '../components/CourseHeader'
 import { SessionAccordion } from '../components/SessionAccordion'
 import { useProgramKlassDetail } from '../hooks/useProgramKlassDetail'
-import type { Program } from '@shared/types/domain'
+import { toDateStr } from '@shared/utils/dates'
+import type { Program, SessionType } from '@shared/types/domain'
 
-const MOCK_TODAY_STR = '2025-02-10'
+// Shape thật từ BE GET /instructor/programs
+interface ProgramDto {
+  program_id: string
+  program_name: string
+  color: string
+  klasses: Array<{
+    course_run_id: string
+    label: string
+    student_count: number
+    type: SessionType
+  }>
+}
+
+function toProgram(p: ProgramDto): Program {
+  return {
+    id: p.program_id,
+    name: p.program_name,
+    color: p.color,
+    klasses: p.klasses.map((k) => ({
+      id: k.course_run_id,
+      programId: p.program_id,
+      label: k.label,
+      studentCount: k.student_count,
+      endDate: '',
+      sessions: [],
+    })),
+  }
+}
 
 export function CoursesPage() {
   const [params] = useSearchParams()
@@ -19,10 +47,12 @@ export function CoursesPage() {
   const programId = params.get('program') ?? undefined
   const klassId = params.get('klass') ?? undefined
   const sessionId = params.get('session') ?? undefined
+  const todayStr = toDateStr(new Date())
 
   const { data: programs = [], isLoading: progLoading } = useQuery({
     queryKey: ['programs', 'list'],
-    queryFn: () => api.get<Program[]>('/instructor/programs'),
+    queryFn: async () =>
+      (await api.get<ProgramDto[]>('/instructor/programs')).map(toProgram),
   })
 
   const detailQuery = useProgramKlassDetail(programId, klassId)
@@ -152,7 +182,7 @@ export function CoursesPage() {
           program={detail.program}
           klassLabel={detail.klass.label}
           sessions={detail.klass.sessions}
-          today={MOCK_TODAY_STR}
+          today={todayStr}
           initialSessionId={sessionId}
         />
       </div>

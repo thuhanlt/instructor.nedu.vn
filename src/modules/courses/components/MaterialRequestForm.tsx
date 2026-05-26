@@ -1,32 +1,30 @@
 import { useState } from 'react'
 import { Button } from '@shared/components/Button'
 import { Icon } from '@shared/components/Icon'
-import { UploadZone } from '@shared/components/UploadZone'
 import { notify } from '@shared/utils/notify'
 import { analytics, ANALYTICS_EVENTS } from '@shared/analytics'
 import { useSendMaterialRequest } from '../hooks/useSendMaterialRequest'
+import type { Material } from '@shared/types/domain'
 
 interface Props {
   sessionId: string
+  materials: Material[]
 }
 
-function fmtSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-}
-
-export function MaterialRequestForm({ sessionId }: Props) {
+export function MaterialRequestForm({ sessionId, materials }: Props) {
   const [open, setOpen] = useState(false)
   const [done, setDone] = useState(false)
+  const [materialId, setMaterialId] = useState(materials[0]?.id ?? '')
   const [note, setNote] = useState('')
-  const [files, setFiles] = useState<File[]>([])
   const [noteErr, setNoteErr] = useState(false)
   const submit = useSendMaterialRequest()
 
+  // Yêu cầu chỉnh sửa gắn với MỘT tài liệu cụ thể — không có tài liệu thì ẩn.
+  if (materials.length === 0) return null
+
   function reset() {
     setNote('')
-    setFiles([])
+    setMaterialId(materials[0]?.id ?? '')
     setOpen(false)
     setNoteErr(false)
   }
@@ -36,15 +34,13 @@ export function MaterialRequestForm({ sessionId }: Props) {
       setNoteErr(true)
       return
     }
+    const chosen = materialId || materials[0]?.id
+    if (!chosen) return
     try {
-      await submit.mutateAsync({ sessionId, note: note.trim(), files })
-      analytics.track(ANALYTICS_EVENTS.MATERIAL_REQUEST_SENT, {
-        sessionId,
-        fileCount: files.length,
-      })
+      await submit.mutateAsync({ sessionId, materialId: chosen, note: note.trim() })
+      analytics.track(ANALYTICS_EVENTS.MATERIAL_REQUEST_SENT, { sessionId, materialId: chosen })
       setDone(true)
       setNote('')
-      setFiles([])
       notify('Đã gửi yêu cầu chỉnh sửa tài liệu', 'success')
     } catch {
       notify('Gửi yêu cầu thất bại — vui lòng thử lại', 'error')
@@ -75,12 +71,7 @@ export function MaterialRequestForm({ sessionId }: Props) {
         <div style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 4 }}>
           Vận hành sẽ xử lý trong thời gian sớm nhất
         </div>
-        <Button
-          variant="o"
-          size="sm"
-          style={{ marginTop: 10 }}
-          onClick={() => setDone(false)}
-        >
+        <Button variant="o" size="sm" style={{ marginTop: 10 }} onClick={() => setDone(false)}>
           Quay lại
         </Button>
       </div>
@@ -112,6 +103,21 @@ export function MaterialRequestForm({ sessionId }: Props) {
       }}
     >
       <div className="fg">
+        <label className="fl">Tài liệu cần chỉnh sửa</label>
+        <select
+          className="fin"
+          value={materialId}
+          onChange={(e) => setMaterialId(e.target.value)}
+        >
+          {materials.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="fg">
         <label className="fl">Ghi chú: phần nào cần chỉnh sửa</label>
         <textarea
           className={`fta ${noteErr ? 'err' : ''}`}
@@ -123,51 +129,9 @@ export function MaterialRequestForm({ sessionId }: Props) {
           placeholder="Vd: Slide 4 ví dụ chưa phù hợp với học viên doanh nghiệp..."
         />
         {noteErr ? (
-          <div style={{ fontSize: 11.5, color: 'var(--red)' }}>
-            Bạn chưa điền ghi chú
-          </div>
+          <div style={{ fontSize: 11.5, color: 'var(--red)' }}>Bạn chưa điền ghi chú</div>
         ) : null}
       </div>
-
-      <UploadZone
-        accept="image/*,.pdf,.doc,.docx,.ppt,.pptx"
-        onFilesAdded={(arr) => setFiles((prev) => [...prev, ...arr])}
-      />
-
-      {files.length > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {files.map((f, idx) => (
-            <div
-              key={`${f.name}-${idx}`}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                background: '#fff',
-                border: '1px solid var(--border)',
-                padding: '7px 10px',
-                borderRadius: 'var(--rs)',
-                fontSize: 12.5,
-              }}
-            >
-              <Icon name="doc" size={14} className="muted" />
-              <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {f.name}
-              </span>
-              <span className="faint">{fmtSize(f.size)}</span>
-              <button
-                type="button"
-                className="icon-btn"
-                style={{ color: 'var(--red)' }}
-                onClick={() => setFiles((prev) => prev.filter((_, i) => i !== idx))}
-                aria-label="Xoá file"
-              >
-                <Icon name="close" size={12} />
-              </button>
-            </div>
-          ))}
-        </div>
-      ) : null}
 
       <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
         <Button variant="o" onClick={reset} disabled={submit.isPending}>

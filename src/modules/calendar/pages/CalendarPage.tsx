@@ -6,10 +6,6 @@ import { YearView } from '../components/YearView'
 import { addDays, weekStart, monthLabel } from '@shared/utils/dates'
 import { usePrefsStore } from '@shared/stores/usePrefsStore'
 
-// Mock TODAY (Feb 10, 2025) — when real API is wired the BE will respect tz; for FE
-// we just need a consistent "now" while mocking.
-const MOCK_TODAY = new Date(2025, 1, 10)
-
 function isoWeekNumber(d: Date): number {
   const target = new Date(d)
   target.setHours(0, 0, 0, 0)
@@ -31,7 +27,7 @@ function weekLabel(start: Date): string {
 }
 
 export function CalendarPage() {
-  const today = MOCK_TODAY
+  const today = new Date()
   const lang = usePrefsStore((s) => s.lang)
   const [view, setView] = useState<CalView>('week')
   const [cursor, setCursor] = useState<Date>(today)

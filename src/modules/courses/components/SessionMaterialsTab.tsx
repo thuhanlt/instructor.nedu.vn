@@ -1,10 +1,12 @@
 import { Button } from '@shared/components/Button'
 import { Icon, type IconName } from '@shared/components/Icon'
 import { EmptyState } from '@shared/components/EmptyState'
+import { SpinnerOverlay } from '@shared/components/SpinnerOverlay'
 import { usePrefsStore } from '@shared/stores/usePrefsStore'
 import { notify } from '@shared/utils/notify'
 import { analytics, ANALYTICS_EVENTS } from '@shared/analytics'
 import { MaterialRequestForm } from './MaterialRequestForm'
+import { useSessionMaterials } from '../hooks/useSessionMaterials'
 import type { Material, Session } from '@shared/types/domain'
 
 interface Props {
@@ -28,6 +30,8 @@ function fmtKb(kb: number): string {
 export function SessionMaterialsTab({ session }: Props) {
   const downloaded = usePrefsStore((s) => s.downloadedMaterials)
   const markDownloaded = usePrefsStore((s) => s.markMaterialDownloaded)
+  // Tài liệu load lazy từ BE /instructor/materials?sessionId= khi mở tab.
+  const { data: materials = [], isLoading } = useSessionMaterials(session.id)
 
   function handleDownload(m: Material) {
     markDownloaded(m.id)
@@ -36,7 +40,6 @@ export function SessionMaterialsTab({ session }: Props) {
       materialId: m.id,
     })
     notify(`Đã tải "${m.name}"`, 'success')
-    // In production this would be a presigned URL. For mock, just simulate.
     try {
       window.open(m.url, '_blank')
     } catch {
@@ -50,7 +53,9 @@ export function SessionMaterialsTab({ session }: Props) {
         Tài liệu chuẩn bị bởi vận hành. Tải xuống trước buổi học.
       </div>
 
-      {session.materials.length === 0 ? (
+      {isLoading ? (
+        <SpinnerOverlay inline label="Đang tải tài liệu..." />
+      ) : materials.length === 0 ? (
         <EmptyState
           icon={<Icon name="doc" size={28} className="faint" />}
           title="Chưa có tài liệu"
@@ -58,7 +63,7 @@ export function SessionMaterialsTab({ session }: Props) {
         />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {session.materials.map((m) => {
+          {materials.map((m) => {
             const isDownloaded = downloaded.includes(m.id)
             return (
               <div key={m.id} className="mat">
@@ -91,7 +96,7 @@ export function SessionMaterialsTab({ session }: Props) {
       )}
 
       <div style={{ marginTop: 6 }}>
-        <MaterialRequestForm sessionId={session.id} />
+        <MaterialRequestForm sessionId={session.id} materials={materials} />
       </div>
     </div>
   )

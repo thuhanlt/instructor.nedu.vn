@@ -3,20 +3,18 @@ import { api } from '@shared/config/api-client'
 
 interface Payload {
   sessionId: string
+  materialId: string
   note: string
-  files: File[]
 }
 
+// BE: POST /instructor/sessions/:sessionId/material-requests  body { material_id, note }
+// Instructor góp ý vận hành sửa MỘT tài liệu có sẵn (không upload file — R2 chưa có).
 export function useSendMaterialRequest() {
   return useMutation({
-    mutationFn: ({ sessionId, note, files }: Payload) => {
-      const form = new FormData()
-      form.set('note', note)
-      for (const f of files) form.append('files', f)
-      return api.postMultipart<{ id: string; status: 'received' }>(
+    mutationFn: ({ sessionId, materialId, note }: Payload) =>
+      api.post<{ message: string }>(
         `/instructor/sessions/${sessionId}/material-requests`,
-        form
-      )
-    },
+        { material_id: materialId, note }
+      ),
   })
 }
