@@ -9,7 +9,6 @@ import {
   useReplyQuestion,
   usePinQuestion,
   usePassToOps,
-  useAISuggestReply,
   type EnrichedQuestion,
 } from '../hooks/useQA'
 
@@ -37,7 +36,6 @@ export function QACard({ question }: Props) {
   const reply = useReplyQuestion()
   const pin = usePinQuestion()
   const pass = usePassToOps()
-  const ai = useAISuggestReply()
 
   useEffect(() => {
     if (!replyOpen) {
@@ -63,19 +61,6 @@ export function QACard({ question }: Props) {
             warn: false,
           }
       : null
-
-  async function handleAISuggest() {
-    try {
-      analytics.track(ANALYTICS_EVENTS.AI_SUGGEST_CLICKED, { id: question.id })
-      const res = await ai.mutateAsync({ id: question.id })
-      setReplyOpen(true)
-      setReplyText(res.reply)
-      setReplyErr(false)
-      notify('AI đã gợi ý câu trả lời — bạn có thể chỉnh sửa trước khi gửi', 'info')
-    } catch {
-      notify('AI tạm thời không khả dụng — vui lòng viết tay', 'error')
-    }
-  }
 
   async function handleReply() {
     if (!replyText.trim()) {
@@ -227,14 +212,6 @@ export function QACard({ question }: Props) {
         <>
           {!replyOpen ? (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <Button
-                variant="ai"
-                size="sm"
-                onClick={handleAISuggest}
-                disabled={ai.isPending}
-              >
-                {ai.isPending ? '✨ Đang nghĩ...' : '✨ Gợi ý câu trả lời (AI)'}
-              </Button>
               <Button
                 variant="p"
                 size="sm"
