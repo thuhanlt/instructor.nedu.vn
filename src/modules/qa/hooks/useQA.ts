@@ -21,9 +21,9 @@ interface QaQuestionDto {
   question_id: string
   session_id: string
   session_title: string
-  course_id: string
+  course_id: string | null
   course_name: string
-  course_run_id: string
+  course_run_id: string | null
   course_run_label: string
   question_text: string
   status: string
@@ -46,8 +46,9 @@ function toEnrichedQuestion(d: QaQuestionDto): EnrichedQuestion | null {
   if (!state) return null
   return {
     id: d.question_id,
-    programId: d.course_id,
-    klassId: d.course_run_id,
+    // null (data lệch) → '' sentinel: không khớp program/klass id thật, chỉ hiện ở "Tất cả".
+    programId: d.course_id ?? '',
+    klassId: d.course_run_id ?? '',
     sessionId: d.session_id,
     text: d.question_text,
     // BE chưa trả tên HV / buổi kế tiếp — để rỗng cho golive.
