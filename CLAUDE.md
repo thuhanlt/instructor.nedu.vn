@@ -1332,5 +1332,55 @@ Khi nào có lỗi → paste lỗi vào Claude Code, kèm 1 trong các câu sau:
 
 ---
 
+## Github flow — Frontend Labs (BẮT BUỘC)
+
+> Nguồn: `instruction-it-labs.html` (NhiLe Holdings · Team IT · Frontend Labs v1.0).
+> **2 repos · 3 branches · 4 vai trò.** Áp dụng cho mọi dự án FE LABS, gồm repo này.
+
+### Topology
+
+- **`origin`** — repo cá nhân của nontech (vibe-code với Claude, MSW = ON).
+- **git LOCAL** — máy IT: có **cả 2 remote** (`origin` + `lab`), MSW = OFF, API thật.
+- **`lab`** — repo trên org NhiLe, deploy thật. 3 branch:
+  - `incoming` — IT push tới đây, **KHÔNG deploy**.
+  - `dev` — staging, Cloudflare auto-deploy.
+  - `main` — production, protected, **chỉ IT Lead** merge.
+
+### Vai trò (ai làm gì)
+
+| Vai trò | PUSH | MERGE |
+|---|---|---|
+| Nontech Owner | `origin/main` | — |
+| IT Member | `origin/main`, `lab main:incoming` | `incoming → dev` (review chéo, ≥1 IT khác) |
+| IT Lead | tất cả | `dev → main` (production gate) |
+| Cloudflare | — | deploy: `lab/main`→prod, `lab/dev`→staging |
+
+### Daily flow — KHÔNG dùng feature branch ở FE
+
+IT làm trực tiếp trên **`main` local**. Mỗi phiên:
+
+```bash
+git pull origin main            # sáng: sync code mới từ nontech
+git add .
+git commit -m "feat/fix: ..."
+git push origin main            # sync với nontech
+git push lab main:incoming      # đẩy lên lab cho IT review
+```
+
+- `main:incoming` = đẩy `main` local lên branch `incoming` của `lab` (không cần tạo branch `incoming` ở local).
+- **Promotion:** `incoming → dev` cần **≥1 review từ IT khác** (KHÔNG self-review) → `dev → main` chỉ **IT Lead**.
+- Staging = `lab/dev`; production = `lab/main`.
+
+### Quy tắc
+
+- **MSW OFF** ở môi trường IT (`VITE_ENABLE_MOCKING=false`) — plug API thật.
+- `.env.local` luôn trong `.gitignore` — **KHÔNG commit**. Mỗi IT giữ env riêng; production secrets chỉ IT Lead chỉnh trên Cloudflare.
+- Sau `clone`/`pull`: audit `.env` / `.gitignore`; thấy secret bị commit → báo + invalidate ngay.
+- Cross-team: trước khi sửa file, báo nontech trên Slack tránh trùng; check chéo `git log` ≥ 1 lần/ngày.
+
+> **Lưu ý nguồn API thật:** shape endpoint thật của BE là `openapi/instructor.yaml` ở repo `nedu-backend`. Mục 6 (API Contracts) bên trên là spec mock gốc — khi nối API thật, một số path/shape đã đổi (BE trả snake_case, transform trong queryFn từng hook).
+
+---
+
 *NL-CLAUDE-004 v1.0 · NhiLe Holdings · 2026*
 *Portal Người Dẫn Đường · instructor.nedu.vn · 39 user stories · 9 module · 1 vai trò chính*
