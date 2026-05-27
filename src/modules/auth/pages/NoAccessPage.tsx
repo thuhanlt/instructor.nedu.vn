@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useAuthStore } from '../stores/useAuthStore'
 
 // Hiển thị khi user đã đăng nhập nhưng KHÔNG có role 'instructor'.
@@ -6,6 +7,21 @@ import { useAuthStore } from '../stores/useAuthStore'
 // chỉ cho đăng xuất + hướng dẫn liên hệ admin.
 export function NoAccessPage() {
   const logout = useAuthStore((s) => s.logout)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  // await rõ ràng để lệnh revoke token chạy trọn vẹn; disable nút chống
+  // double-click cắt ngang. Thành công → store set user=null → ProtectedRoute
+  // redirect /login (component unmount, không setState nữa). Lỗi (mạng lag /
+  // revoke fail) → mở lại nút cho user thử lại.
+  async function handleLogout() {
+    if (isLoggingOut) return
+    setIsLoggingOut(true)
+    try {
+      await logout()
+    } catch {
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <div className="login-shell">
@@ -16,8 +32,13 @@ export function NoAccessPage() {
           Tài khoản của bạn chưa được cấp quyền giảng viên. Vui lòng liên hệ
           quản trị viên để được cấp quyền truy cập cổng instructor.
         </p>
-        <button type="button" className="btn p" onClick={() => void logout()}>
-          Đăng xuất
+        <button
+          type="button"
+          className="btn p"
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+        >
+          {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
         </button>
       </div>
     </div>
