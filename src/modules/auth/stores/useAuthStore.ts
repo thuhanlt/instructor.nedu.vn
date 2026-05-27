@@ -16,10 +16,29 @@ interface AuthState {
   logout: () => Promise<void>
 }
 
+// BE /auth/me trả snake_case { id, email, full_name, avatar_url, roles }.
+// Mock trả FE-shape { id, email, name, roles }. Transform về AuthUser, dùng `??`
+// để chạy cả hai (tiện thể fix `name` lệch `full_name` → Topbar/Sidebar hết "—").
+interface RawMe {
+  id: string
+  email: string
+  name?: string
+  full_name?: string
+  avatarUrl?: string
+  avatar_url?: string
+  roles?: string[]
+}
+
 async function fetchMe(): Promise<AuthUser | null> {
   try {
-    const user = await api.get<AuthUser>('/auth/me')
-    return user
+    const raw = await api.get<RawMe>('/auth/me')
+    return {
+      id: raw.id,
+      email: raw.email,
+      name: raw.name ?? raw.full_name ?? '',
+      avatarUrl: raw.avatarUrl ?? raw.avatar_url ?? undefined,
+      roles: raw.roles ?? [],
+    }
   } catch {
     return null
   }

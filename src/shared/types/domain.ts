@@ -147,7 +147,8 @@ export interface AuthUser {
   email: string
   name: string
   avatarUrl?: string
-  role: 'instructor'
+  // Tất cả role slug của user (từ /auth/me). Cổng instructor yêu cầu 'instructor'.
+  roles: string[]
 }
 
 export interface TokenPair {

@@ -59,13 +59,14 @@ nedu-instructor/
 │   ├── index.css                         # Tailwind directives + CSS variables từ prototype
 │   ├── routes/
 │   │   ├── index.tsx                     # AppRouter — providers + routes
-│   │   └── ProtectedRoute.tsx            # Spinner if loading, redirect /login if no user
+│   │   └── ProtectedRoute.tsx            # loading→spinner; !user→/login; thiếu role 'instructor'→NoAccessPage
 │   │
 │   ├── modules/
 │   │   ├── auth/
 │   │   │   ├── pages/
 │   │   │   │   ├── LoginPage.tsx         # "Đăng nhập với Google" button
-│   │   │   │   └── AuthCallbackPage.tsx  # Parse hash, store tokens, fetch /auth/me, navigate
+│   │   │   │   ├── AuthCallbackPage.tsx  # Parse hash, store tokens, fetch /auth/me, navigate
+│   │   │   │   └── NoAccessPage.tsx      # Đã login nhưng thiếu role 'instructor' → "không có quyền" + Đăng xuất
 │   │   │   └── stores/
 │   │   │       └── useAuthStore.ts       # Zustand: user, isLoading, initialize, loginWithGoogle, acceptTokens, logout
 │   │   │
@@ -490,7 +491,8 @@ export interface AuthUser {
   email: string
   name: string
   avatarUrl?: string
-  role: 'instructor'
+  roles: string[]   // role slug từ /auth/me. Cổng instructor yêu cầu 'instructor'
+                    // (ProtectedRoute) — khớp BE @TrustMatrixGuard('instructor').
 }
 
 export interface TokenPair {
@@ -539,7 +541,7 @@ Auth header: `Authorization: Bearer <access_token>`.
 - `POST ${VITE_AUTH_CENTRAL_URL}/auth/logout` — revoke
 
 ### 6.2. Instructor profile
-- `GET  /auth/me` → `{ data: AuthUser }` — gọi sau khi có token, verify JWT ở BE
+- `GET  /auth/me` → `{ data: { id, email, full_name, avatar_url, roles } }` — BE trả snake_case + `roles: string[]`; `fetchMe` (useAuthStore) transform → `AuthUser`. Cổng instructor yêu cầu role `instructor` (ProtectedRoute) — khớp BE `@TrustMatrixGuard('instructor')`. Thiếu role → `NoAccessPage` (không đá về /login). Endpoint chỉ cần đăng nhập (CentralAuthGuard), trả roles cho mọi user đã login.
 - `GET  /instructor/profile` → `{ data: InstructorProfile }`
 - `PATCH /instructor/profile` body `Partial<InstructorProfile>` → `{ data: InstructorProfile }`
 - `POST /instructor/profile/avatar` multipart `file` → `{ data: { avatarUrl: string } }`

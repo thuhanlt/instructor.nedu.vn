@@ -4,7 +4,7 @@ export const MOCK_USER: AuthUser = {
   id: 'mock-instructor-1',
   email: 'nhile@guide.vn',
   name: 'NhiLe',
-  role: 'instructor',
+  roles: ['instructor'],
 }
 
 export const MOCK_INSTRUCTOR: InstructorProfile = {
