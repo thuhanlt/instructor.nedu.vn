@@ -37,7 +37,10 @@ async function fetchMe(): Promise<AuthUser | null> {
       email: raw.email,
       name: raw.name ?? raw.full_name ?? '',
       avatarUrl: raw.avatarUrl ?? raw.avatar_url ?? undefined,
-      roles: raw.roles ?? [],
+      // Chuẩn hoá tại NGUỒN: dù API trả null/thiếu/sai kiểu → luôn là string[].
+      // Đảm bảo invariant AuthUser.roles: string[] đúng ở runtime, downstream
+      // không cần `?.` và không silent-misfire.
+      roles: Array.isArray(raw.roles) ? raw.roles : [],
     }
   } catch {
     return null

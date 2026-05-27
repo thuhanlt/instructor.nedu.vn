@@ -20,7 +20,10 @@ export function ProtectedRoute() {
   }
   // Đã đăng nhập nhưng thiếu role 'instructor' → trang "không có quyền" (render
   // thẳng, không redirect → tránh loop, giữ nguyên URL). BE vẫn là chốt bảo mật.
-  if (!user.roles?.includes(REQUIRED_ROLE)) {
+  // Guard phòng thủ: roles luôn được fetchMe chuẩn hoá thành string[], nhưng
+  // vẫn normalize ở đây để không crash dù user tới từ nguồn khác (data bất thường).
+  const roles = Array.isArray(user.roles) ? user.roles : []
+  if (!roles.includes(REQUIRED_ROLE)) {
     return <NoAccessPage />
   }
   return <Outlet />
