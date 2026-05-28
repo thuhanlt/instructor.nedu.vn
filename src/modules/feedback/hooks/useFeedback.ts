@@ -48,6 +48,20 @@ interface FeedbackSummaryDto {
   }>
 }
 
+// Defensive clamp: BE đảm bảo rating ∈ 1..5 (DB CHECK + filter IS NOT NULL),
+// nhưng KHÔNG dùng `as 1|2|3|4|5` blind cast — nếu BE đổi thang điểm hoặc DB
+// lọt bản ghi lỗi (0, 6, NaN), UI sẽ crash. Hàm này round + clamp về 1..5 và
+// trả về literal type bằng pure type-narrowing (không có type assertion).
+function toStars(n: number): 1 | 2 | 3 | 4 | 5 {
+  if (!Number.isFinite(n)) return 1
+  const r = Math.round(n)
+  if (r <= 1) return 1
+  if (r === 2) return 2
+  if (r === 3) return 3
+  if (r === 4) return 4
+  return 5
+}
+
 function toFeedbackResponse(d: FeedbackSummaryDto): FeedbackResponse {
   return {
     stats: {
@@ -62,8 +76,10 @@ function toFeedbackResponse(d: FeedbackSummaryDto): FeedbackResponse {
         programId: i.course_id,
         klassId: i.course_run_id,
         sessionId: i.session_id,
-        stars: i.rating as 1 | 2 | 3 | 4 | 5, // BE đảm bảo 1..5 (CHECK + filter)
-        text: i.comment,
+        stars: toStars(i.rating),
+        // BE filter `comment <> ''` nhưng comment toàn whitespace có thể lọt
+        // (xem openapi → FeedbackSummaryItem.comment) → trim khi render.
+        text: i.comment.trim(),
         // is_anonymous: BE đã set student_name=null → hiển thị "Ẩn danh".
         studentName: i.student_name ?? 'Ẩn danh',
         createdAt: i.created_at,
