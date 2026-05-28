@@ -1,14 +1,14 @@
-import { useState } from 'react'
 import { Card } from '@shared/components/Card'
 import { Tag } from '@shared/components/Tag'
 import { SpinnerOverlay } from '@shared/components/SpinnerOverlay'
 import { EmptyState } from '@shared/components/EmptyState'
-import { Icon } from '@shared/components/Icon'
-import { useKlassList, type KlassListItem } from '../hooks/useKlassAnalytics'
-import { StudentAnalyticsModal } from '../components/StudentAnalyticsModal'
+import { useKlassList } from '../hooks/useKlassAnalytics'
 
+// StudentAnalyticsModal (phân tích MBTI/bát tự/cung hoàng đạo/kiểu người) là
+// feature LCM-only, data từ portal learn — chưa nối, DORMANT cho golive.
+// Xem TODO[LCM] trong useKlassAnalytics.ts. Trang này hiện CHỈ liệt kê lớp +
+// đếm học viên (không click vào lớp).
 export function StudentsPage() {
-  const [active, setActive] = useState<KlassListItem | null>(null)
   const { data: klasses = [], isLoading, isError, refetch } = useKlassList()
 
   const total = klasses.reduce((s, k) => s + k.studentCount, 0)
@@ -20,8 +20,7 @@ export function StudentsPage() {
           Học viên
         </h1>
         <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4 }}>
-          Phân tích nhóm — không hiển thị thông tin cá nhân. Bấm vào một lớp để xem chi
-          tiết.
+          Phân tích nhóm — không hiển thị thông tin cá nhân.
         </div>
       </div>
 
@@ -38,21 +37,14 @@ export function StudentsPage() {
       ) : (
         <Card>
           {klasses.map((k, idx) => (
-            <button
+            <div
               key={k.klassId}
-              type="button"
-              onClick={() => setActive(k)}
               style={{
-                width: '100%',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,
                 padding: '14px 0',
                 borderTop: idx === 0 ? 'none' : '1px solid var(--border)',
-                background: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                textAlign: 'left',
               }}
             >
               <span
@@ -89,8 +81,7 @@ export function StudentsPage() {
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--faint)' }}>học viên</div>
               </div>
-              <Icon name="chev-right" size={16} className="muted" />
-            </button>
+            </div>
           ))}
           <div
             style={{
@@ -109,8 +100,6 @@ export function StudentsPage() {
           </div>
         </Card>
       )}
-
-      <StudentAnalyticsModal klass={active} onClose={() => setActive(null)} />
     </>
   )
 }
