@@ -1,3 +1,11 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// TODO[R2-UPLOAD]: AvatarUpload là feature CHỜ R2 upload sẵn sàng. DORMANT cho
+// golive 2026-05-30: ProfilePage KHÔNG render component này, BE endpoint
+// POST /instructor/profile/avatar chưa build. Code giữ nguyên để revive sau:
+//   1. BE build endpoint upload qua OBJECT_STORAGE contract (Phase 1 stub đã có).
+//   2. ProfilePage import + render lại <AvatarUpload>.
+//   3. Verify R2 signed-URL flow + file size limit (~2MB) trước khi expose.
+// ─────────────────────────────────────────────────────────────────────────────
 import { useRef } from 'react'
 import { Icon } from '@shared/components/Icon'
 import { notify } from '@shared/utils/notify'

@@ -10,10 +10,13 @@ interface Props {
   profile: InstructorProfile
 }
 
+// R3 Nhóm 5 (2026-05-27): identity fields (name/email/role/joinedYear/experience)
+// do vanhanh quản → read-only. Instructor chỉ edit phone + bio.
+// Tags: editable theo BE/API nhưng UI chưa có editor — defer post-golive.
 export function ProfileForm({ profile }: Props) {
   const [edit, setEdit] = useState(false)
   const [draft, setDraft] = useState<InstructorProfile>(profile)
-  const [errs, setErrs] = useState<{ name?: boolean; email?: boolean }>({})
+  const [errs, setErrs] = useState<{ phone?: boolean }>({})
   const update = useUpdateProfile()
 
   function startEdit() {
@@ -27,10 +30,11 @@ export function ProfileForm({ profile }: Props) {
     setErrs({})
   }
   async function save() {
-    const nameErr = !draft.name.trim()
-    const emailErr = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.email)
-    if (nameErr || emailErr) {
-      setErrs({ name: nameErr, email: emailErr })
+    // Phone validation: cho phép rỗng; reject text chars (giống BE).
+    const phoneErr =
+      draft.phone !== '' && !/^[\d\s+\-().]*$/.test(draft.phone)
+    if (phoneErr) {
+      setErrs({ phone: true })
       return
     }
     try {
@@ -87,45 +91,29 @@ export function ProfileForm({ profile }: Props) {
             columnGap: 20,
           }}
         >
-          <div className="fg">
-            <label className="fl">Họ và tên</label>
-            <input
-              className={`fi ${errs.name ? 'err' : ''}`}
-              value={draft.name}
-              onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-            />
-            {errs.name ? (
-              <div style={{ color: 'var(--red)', fontSize: 11 }}>Họ tên là bắt buộc</div>
-            ) : null}
-          </div>
-          <div className="fg">
-            <label className="fl">Email</label>
-            <input
-              type="email"
-              className={`fi ${errs.email ? 'err' : ''}`}
-              value={draft.email}
-              onChange={(e) => setDraft({ ...draft, email: e.target.value })}
-            />
-            {errs.email ? (
-              <div style={{ color: 'var(--red)', fontSize: 11 }}>Email không hợp lệ</div>
-            ) : null}
-          </div>
+          {/* Họ và tên — vanhanh quản, read-only */}
+          <ReadOnlyField label="Họ và tên" value={profile.name} />
+          {/* Email — auth-central identity, read-only */}
+          <ReadOnlyField label="Email" value={profile.email} />
+          {/* Điện thoại — instructor edit được */}
           <div className="fg">
             <label className="fl">Điện thoại</label>
             <input
-              className="fi"
+              className={`fi ${errs.phone ? 'err' : ''}`}
               value={draft.phone}
+              maxLength={30}
+              placeholder="Để trống nếu chưa có"
               onChange={(e) => setDraft({ ...draft, phone: e.target.value })}
             />
+            {errs.phone ? (
+              <div style={{ color: 'var(--red)', fontSize: 11 }}>
+                Chỉ được chứa số, dấu cách, +, -, ( ), .
+              </div>
+            ) : null}
           </div>
-          <div className="fg">
-            <label className="fl">Kinh nghiệm</label>
-            <input
-              className="fi"
-              value={draft.experience}
-              onChange={(e) => setDraft({ ...draft, experience: e.target.value })}
-            />
-          </div>
+          {/* Kinh nghiệm — vanhanh quản, read-only */}
+          <ReadOnlyField label="Kinh nghiệm" value={profile.experience} />
+          {/* Giới thiệu bản thân — instructor edit được */}
           <div className="fg" style={{ gridColumn: '1 / -1' }}>
             <label className="fl">Giới thiệu bản thân</label>
             <textarea
@@ -185,6 +173,32 @@ function Field({
           overflow: multiline ? 'visible' : 'hidden',
           textOverflow: 'ellipsis',
         }}
+      >
+        {value || <span className="faint">—</span>}
+      </div>
+    </div>
+  )
+}
+
+// Trong chế độ edit: dùng label cùng style với input nhưng giá trị hiển thị dạng
+// "fi disabled" để giữ chiều cao + alignment với các input khác trong grid.
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="fg">
+      <label className="fl">{label}</label>
+      <div
+        style={{
+          padding: '8px 10px',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--rs)',
+          background: 'var(--tint)',
+          color: 'var(--muted)',
+          fontSize: 13.5,
+          minHeight: 36,
+          display: 'flex',
+          alignItems: 'center',
+        }}
+        title="Trường này do vận hành quản lý — liên hệ admin để cập nhật"
       >
         {value || <span className="faint">—</span>}
       </div>

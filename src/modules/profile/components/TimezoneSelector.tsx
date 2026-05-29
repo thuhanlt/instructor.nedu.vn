@@ -1,3 +1,11 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// TODO[POST-GOLIVE]: TimezoneSelector manual override DORMANT cho golive
+// 2026-05-30. Quyết định Nhóm 5 (2026-05-27): timezone auto-detect từ OS bằng
+// Intl.DateTimeFormat (xem usePrefsStore + App.tsx). ProfilePage không render
+// component này. Code giữ lại để revive nếu sau golive có user thật cần manual
+// override (vd dùng VPN, OS timezone sai). Khi revive: cân nhắc làm "advanced
+// settings" thay vì primary UI.
+// ─────────────────────────────────────────────────────────────────────────────
 import { useQueryClient } from '@tanstack/react-query'
 import { Icon } from '@shared/components/Icon'
 import { TIMEZONES, timezoneShortLabel } from '@shared/timezone'

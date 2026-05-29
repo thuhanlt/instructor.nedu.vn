@@ -2,11 +2,13 @@ import { Card } from '@shared/components/Card'
 import { SpinnerOverlay } from '@shared/components/SpinnerOverlay'
 import { EmptyState } from '@shared/components/EmptyState'
 import { Tag } from '@shared/components/Tag'
-import { AvatarUpload } from '../components/AvatarUpload'
 import { ProfileForm } from '../components/ProfileForm'
-import { TimezoneSelector } from '../components/TimezoneSelector'
 import { useProfile } from '../hooks/useProfile'
 
+// R3 Nhóm 5 (2026-05-27):
+// - AvatarUpload ẩn (R2 upload defer, xem TODO[R2-UPLOAD] trong useProfile.ts).
+// - TimezoneSelector ẩn (timezone auto-detect từ OS, xem App.tsx + usePrefsStore).
+// - role + joinedYear hiện "—" nếu vanhanh chưa fill.
 export function ProfilePage() {
   const { data: profile, isLoading, isError, refetch } = useProfile()
 
@@ -21,6 +23,9 @@ export function ProfilePage() {
         />
       </Card>
     )
+
+  const hasRole = profile.role !== ''
+  const hasJoinedYear = profile.joinedYear > 0
 
   return (
     <>
@@ -43,7 +48,6 @@ export function ProfilePage() {
             flexWrap: 'wrap',
           }}
         >
-          <AvatarUpload name={profile.name} avatarUrl={profile.avatarUrl} />
           <div style={{ flex: 1, minWidth: 200 }}>
             <div
               style={{
@@ -56,22 +60,28 @@ export function ProfilePage() {
               {profile.name}
             </div>
             <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 4 }}>
-              {profile.role} · Tham gia từ {profile.joinedYear}
+              {hasRole && hasJoinedYear
+                ? `${profile.role} · Tham gia từ ${profile.joinedYear}`
+                : hasRole
+                  ? profile.role
+                  : hasJoinedYear
+                    ? `Tham gia từ ${profile.joinedYear}`
+                    : '—'}
             </div>
-            <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-              {profile.tags.map((t) => (
-                <Tag key={t} variant="closed">
-                  {t}
-                </Tag>
-              ))}
-            </div>
+            {profile.tags.length > 0 ? (
+              <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+                {profile.tags.map((t) => (
+                  <Tag key={t} variant="closed">
+                    {t}
+                  </Tag>
+                ))}
+              </div>
+            ) : null}
           </div>
         </div>
       </Card>
 
       <ProfileForm profile={profile} />
-
-      <TimezoneSelector />
     </>
   )
 }

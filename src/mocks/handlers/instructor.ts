@@ -1,6 +1,6 @@
 import { http, HttpResponse, delay } from 'msw'
 import { env } from '@shared/config/env'
-import { MOCK_INSTRUCTOR } from '@mocks/data/instructor'
+import { MOCK_INSTRUCTOR, MOCK_INSTRUCTOR_PROFILE_DTO } from '@mocks/data/instructor'
 import {
   KLASSES,
   PROGRAMS,
@@ -155,14 +155,24 @@ function buildDashboard(): DashboardData {
 export const instructorHandlers = [
   http.get(`${apiBase}/instructor/profile`, async () => {
     await delay(150)
-    return HttpResponse.json({ data: MOCK_INSTRUCTOR })
+    return HttpResponse.json({ data: MOCK_INSTRUCTOR_PROFILE_DTO })
   }),
 
+  // PATCH chỉ accept 3 field instructor edit được (phone / bio / expertise_tags).
+  // BE strip field khác qua DTO whitelist; mock đây làm tương tự — chỉ update 3 key
+  // đã khai báo, các field vanhanh-managed (name/email/role/joined/experience) ignore.
   http.patch(`${apiBase}/instructor/profile`, async ({ request }) => {
-    const body = (await request.json()) as Partial<typeof MOCK_INSTRUCTOR>
-    Object.assign(MOCK_INSTRUCTOR, body)
+    const body = (await request.json()) as Partial<{
+      phone: string | null
+      bio: string | null
+      expertise_tags: string[]
+    }>
+    if (body.phone !== undefined) MOCK_INSTRUCTOR_PROFILE_DTO.phone = body.phone
+    if (body.bio !== undefined) MOCK_INSTRUCTOR_PROFILE_DTO.bio = body.bio
+    if (body.expertise_tags !== undefined) MOCK_INSTRUCTOR_PROFILE_DTO.expertise_tags = body.expertise_tags
+    MOCK_INSTRUCTOR_PROFILE_DTO.updated_at = new Date().toISOString()
     await delay(220)
-    return HttpResponse.json({ data: MOCK_INSTRUCTOR })
+    return HttpResponse.json({ data: MOCK_INSTRUCTOR_PROFILE_DTO })
   }),
 
   http.get(`${apiBase}/instructor/dashboard`, async () => {
